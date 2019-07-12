@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock title %}
+
+{% block content %}
+    <h1>Home Page</h1>
+    {% if user.is_authenticated %}
+        <li>User: {{ user.get_username }}</li>
+        {% if user.is_superuser %}
+            <li>You are admin</li>
+        {% else %}
+            <li>You are usual member</li>
+        {% endif %}
+        <li><a href="{% url 'logout'%}?next={{request.path}}">Logout</a></li>
+    {% else %}
+        <li><a href="{% url 'login'%}?next={{request.path}}">Login</a></li>
+        <li><a href="{% url 'signup'%}?next={{request.path}}">Sign Up</a></li>
+    {% endif %}
+{% endblock content%}
