@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'a+ooujlv+rv2@sf*7=te2jub-@0dl)j2wm&rhy%3jplu-+tz^-'
+SECRET_KEY = os.environ.get('AUTH_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users',
+    'axes',
+    'phonenumber_field',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'authentification.urls'
@@ -125,6 +128,40 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGIN_REDIRECT_URL = '/'
 
-AUTHENTICATION_BACKENDS = ['users.mybackend.EmailOrUsernameOrPhoneNumberModelBackend']
+AUTHENTICATION_BACKENDS = ['axes.backends.AxesBackend', 'users.mybackend.EmailOrUsernameOrPhoneNumberModelBackend']
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ACCOUNT_SECURITY_API_KEY = os.environ.get('ACCOUNT_SECURITY_API_KEY')
+
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+
+TWILIO_PHONE_NMB = os.environ.get('TWILIO_PHONE_NMB')
+
+AXES_FAILURE_LIMIT = 7
+
+AXES_COOLOFF_TIME = 1
+
+AXES_RESET_ON_SUCCESS = True
+
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+
+AXES_LOCKOUT_URL = 'access-banned/'
+
+EMAIL_USE_TLS = True
+
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+
+SERVER_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+
+EMAIL_HOST = 'smtp.gmail.com'
+
+EMAIL_PORT = 587
+
+EMAIL_HOST_USER = os.environ.get('DEFAULT_FROM_EMAIL')
+
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+SITE_NAME = 'MY SITE'

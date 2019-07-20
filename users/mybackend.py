@@ -11,13 +11,19 @@ class EmailOrUsernameOrPhoneNumberModelBackend(ModelBackend):
 
         if username is None:
             username = kwargs.get(user_model.USERNAME_FIELD)
+        try:
+            users = user_model._default_manager.filter(
+                Q(**{user_model.USERNAME_FIELD: username}) | Q(email__iexact=username, email_confirmed=True) | Q(phone=username, phone_confirmed=True)
+            )
+        except:
+            users = user_model._default_manager.filter(
+                Q(**{user_model.USERNAME_FIELD: username}) | Q(email__iexact=username, email_confirmed=True)
+            )
 
-        users = user_model._default_manager.filter(
-            Q(**{user_model.USERNAME_FIELD: username}) | Q(email__iexact=username) | Q(phone=username)
-        )
         for user in users:
             if user.check_password(password):
+                user.save()
                 return user
-        if not users:
 
+        if not users:
             user_model().set_password(password)

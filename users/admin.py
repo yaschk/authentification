@@ -1,18 +1,29 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import CustomUser
+from users.models import CustomUser
 
 
-class CustomUserAdmin(UserAdmin):
-    # add_form = CustomUserCreationForm
-    # form = CustomUserChangeForm
-    model = CustomUser
-    list_display = ['email', 'username', 'phone', 'is_staff', 'is_superuser', 'email_confirmed', 'is_active',]
+class UserAdmin(UserAdmin):
 
-    def __init__(self, model, admin_site):
-        super().__init__(model, admin_site)
-        self.add_fieldsets[0][1]['fields'] = ('username', 'phone', 'email', 'password1', 'password2',)
+    list_display = ['username', 'email', 'phone', 'first_and_last_name', 'is_active', 'is_staff',
+                    'email_confirmed', 'phone_confirmed', 'is_superuser', 'unconfirmed_email', 'unconfirmed_phone',]
+    fieldsets = (
+        (None, {'fields': ('email', 'phone', 'password')}),
+        ('Personal info', {'fields': ('first_and_last_name', )}),
+        ('Permissions', {'fields': ('is_active', 'email_confirmed', 'phone_confirmed', 'is_staff', 'is_superuser', 'groups',
+                                    'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        )
+    readonly_fields = ('last_login', 'date_joined',)
+    list_editable = ('is_active', 'is_staff', )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'phone', 'password1', 'password2'), }),)
+    search_fields = ['username', 'email', 'phone', 'first_and_last_name', ]
+
+    class Meta:
+        model = CustomUser
 
 
-admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(CustomUser, UserAdmin)
