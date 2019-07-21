@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.core.validators import validate_email
+from users.spec_func import ipInfo, get_calling_code
+
 
 User = get_user_model()
 
@@ -34,27 +36,45 @@ class SignUpForm(UserCreationForm):
 
     def clean_email_or_phone(self):
         email_or_phone = self.cleaned_data['email_or_phone']
+
         try:
-            try:
-                if User.objects.filter(phone=email_or_phone).exists():
-                    raise ValidationError("Entered phone already exists")
-            except ValueError:
-                phone_plus_check = '+' + email_or_phone
-                if User.objects.filter(phone=phone_plus_check).exists():
-                    raise ValidationError("Entered phone already exists")
-                else:
-                    email_or_phone = phone_plus_check
+            if User.objects.filter(phone=email_or_phone).exists():
+                raise ValidationError("Entered phone already exists")
+            it_is_normal_phone = True
         except ValueError:
+            it_is_normal_phone = False
+
+
+        if not it_is_normal_phone:
             try:
-                validate_email(email_or_phone)
-                it_is_email = True
-            except ValidationError:
-                it_is_email = False
-            if it_is_email:
-                if User.objects.filter(email=email_or_phone).exists():
-                    raise ValidationError("Entered email already exists")
-            else:
-                raise ValidationError("Incorrect field")
+                if User.objects.filter(phone='+' + email_or_phone).exists():
+                    raise ValidationError("Entered phone already exists")
+                it_is_plus_phone = True
+                email_or_phone = '+' + email_or_phone
+            except ValueError:
+                it_is_plus_phone = False
+
+            if not it_is_plus_phone:
+                try:
+                    if User.objects.filter(phone=('+' + str(get_calling_code(ipInfo())) + email_or_phone)).exists():
+                        raise ValidationError("Entered phone already exists")
+                    it_is_local_phone = True
+                    email_or_phone = '+' + str(get_calling_code(ipInfo())) + email_or_phone
+                except ValueError:
+                    it_is_local_phone = False
+
+                if not it_is_local_phone:
+                    try:
+                        validate_email(email_or_phone)
+                        it_is_email = True
+                    except ValidationError:
+                        it_is_email = False
+                    if it_is_email:
+                        if User.objects.filter(email=email_or_phone).exists():
+                            raise ValidationError("Entered email already exists")
+                    else:
+                        raise ValidationError("Incorrect field")
+
         return email_or_phone
 
 
@@ -71,31 +91,44 @@ class PasswordResetRequestForm(forms.Form):
 
     def clean_email_or_phone_or_username(self):
         email_or_phone_or_username = self.cleaned_data['email_or_phone_or_username']
-        try:
-            try:
-                if User.objects.get(phone=email_or_phone_or_username):
-                    return email_or_phone_or_username
-            except ObjectDoesNotExist:
-                raise ValidationError("Entered phone does not exist")
-        except ValueError:
-            try:
-                validate_email(email_or_phone_or_username)
-                is_email = True
-            except ValidationError:
-                is_email = False
 
-            if is_email:
+        try:
+            if User.objects.get(phone=email_or_phone_or_username):
+                return email_or_phone_or_username
+            it_is_normal_phone = True
+        except ValueError:
+            it_is_normal_phone = False
+
+        if not it_is_normal_phone:
+            try:
+                if User.objects.get(phone='+' + email_or_phone_or_username):
+                    return '+' + email_or_phone_or_username
+                it_is_plus_phone = True
+            except ValueError:
+                it_is_plus_phone = False
+
+            if not it_is_plus_phone:
                 try:
-                    if User.objects.get(email=email_or_phone_or_username):
-                        return email_or_phone_or_username
-                except ObjectDoesNotExist:
-                    raise ValidationError("Entered email does not exist")
-            else:
-                try:
-                    if User.objects.get(username=email_or_phone_or_username):
-                        return email_or_phone_or_username
-                except ObjectDoesNotExist:
-                    raise ValidationError("Entered username does not exist")
+                    if User.objects.get(phone=('+' + str(get_calling_code(ipInfo())) + email_or_phone_or_username)):
+                        return '+' + str(get_calling_code(ipInfo())) + email_or_phone_or_username
+                    it_is_local_phone = True
+                except ValueError:
+                    it_is_local_phone = False
+
+                if not it_is_local_phone:
+                    try:
+                        validate_email(email_or_phone_or_username)
+                        it_is_email = True
+                    except ValidationError:
+                        it_is_email = False
+                    try:
+                        if it_is_email:
+                            if User.objects.get(email=email_or_phone_or_username):
+                                return email_or_phone_or_username
+                        elif User.objects.get(username=email_or_phone_or_username):
+                            return email_or_phone_or_username
+                    except ObjectDoesNotExist:
+                        raise ValidationError("This member doesn't exist")
 
 
 class SetPasswordForm(forms.Form):

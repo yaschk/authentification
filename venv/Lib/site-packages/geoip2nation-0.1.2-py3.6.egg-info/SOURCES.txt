@@ -1,0 +1,14 @@
+LICENSE.txt
+MANIFEST.in
+README.md
+setup.cfg
+setup.py
+geoip/__init__.py
+geoip/geoip.py
+geoip/ip2nation.zip
+geoip/ipinfo.py
+geoip/utillx.py
+geoip2nation.egg-info/PKG-INFO
+geoip2nation.egg-info/SOURCES.txt
+geoip2nation.egg-info/dependency_links.txt
+geoip2nation.egg-info/top_level.txt
