@@ -1,6 +1,6 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
-from users.forms import SignUpForm, TokenForm, SetPasswordForm
+from users.forms import SignUpForm, TokenForm, CSetPasswordForm
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.utils.encoding import force_text
@@ -18,15 +18,11 @@ from django.contrib import messages
 from django.db.models.query_utils import Q
 import phonenumbers
 from users.spec_func import mail_creator_phone, mail_creator_email, validate_email_address
+from django.contrib.auth.views import PasswordResetConfirmView
 
 authy_api = AuthyApiClient(settings.ACCOUNT_SECURITY_API_KEY)
 
 User = get_user_model()
-
-
-# special func
-
-# special func end
 
 
 def signup(request):
@@ -187,31 +183,41 @@ def reset_password_request_view(request):
     return render(request, 'registration/password_reset_form.html', {'form': form})
 
 
-class PasswordResetConfirmView(FormView):
-    template_name = "registration/password_reset_form.html"
-    success_url = '/accounts/reset/done/'
-    form_class = SetPasswordForm
+# class PasswordResetConfirmView(FormView):
+#     template_name = "registration/password_reset_confirm.html"
+#     success_url = '/accounts/reset/done/'
+#     form_class = SetPasswordForm
+#
+#     def post(self, request, uidb64=None, token=None, *arg, **kwargs):
+#         UserModel = get_user_model()
+#         form = self.form_class(request.POST)
+#         assert uidb64 is not None and token is not None
+#         try:
+#             uid = urlsafe_base64_decode(uidb64)
+#             user = UserModel._default_manager.get(pk=uid)
+#         except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
+#             user = None
+#
+#         if user is not None and default_token_generator.check_token(user, token):
+#             if form.is_valid():
+#                 new_password = form.cleaned_data['new_password2']
+#                 user.set_password(new_password)
+#                 user.save()
+#                 # messages.success(request, 'Password has been reset.')
+#                 return self.form_valid(form)
+#             else:
+#                 # form = SetPasswordForm()
+#                 # return render(request, 'registration/password_reset_confirm.html', {'form': form})
+#                 # messages.error(request, 'Password reset has not been unsuccessful.')
+#                 return self.form_invalid(form)
+#         else:
+#             messages.error(request, 'The reset password link is no longer valid.')
+#             return self.form_invalid(form)
 
-    def post(self, request, uidb64=None, token=None, *arg, **kwargs):
-        UserModel = get_user_model()
-        form = self.form_class(request.POST)
-        assert uidb64 is not None and token is not None
-        try:
-            uid = urlsafe_base64_decode(uidb64)
-            user = UserModel._default_manager.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-            user = None
+# class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 
-        if user is not None and default_token_generator.check_token(user, token):
-            if form.is_valid():
-                new_password = form.cleaned_data['new_password2']
-                user.set_password(new_password)
-                user.save()
-                messages.success(request, 'Password has been reset.')
-                return self.form_valid(form)
-            else:
-                messages.error(request, 'Password reset has not been unsuccessful.')
-                return self.form_invalid(form)
-        else:
-            messages.error(request, 'The reset password link is no longer valid.')
-            return self.form_invalid(form)
+
+class New_PasswordResetConfirmView(PasswordResetConfirmView):
+    form_class = CSetPasswordForm
+    def __init__(self):
+        super(New_PasswordResetConfirmView, self)

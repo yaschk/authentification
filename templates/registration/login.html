@@ -3,39 +3,45 @@
 {% block title %}Login{% endblock title %}
 
 {% block content %}
-    <h1>Login Page</h1>
-    {% if form.errors %}
-        <p>Your username and password didn't match. Please try again.</p>
-    {% endif %}
+    <div class="login-signup-container container-fluid">
+        <div class="row">
+            <div class="login-page-login-wrapper col-sm-12 col-md-9 col-lg-7 col-xl-6">
+                <div class="row">
+                {% if user.is_authenticated %}
+                                You are already logged in
+                            {% else %}
+                     <div class="login-form-wrapper col-sm-12 col-md-6">
+                        <div class="login-form-second-wrapper">
+                            <h2 class="login-header no-copy">Login</h2>
+                            <form autocomplete="off" method="post">
+                              {% csrf_token %}
+                                <div>
+                                    {% for field in form %}
+                                        <div class="input-group">
+                                           {{ field }}
+                                        </div>
+                                    {% endfor %}
 
-    {% if next %}
-        {% if user.is_authenticated %}
-            <p>Your account doesn't have access to this page. To proceed,
-            please login with an account that has access.</p>
-        {% else %}
-            <p>Please login to see this page.</p>
-        {% endif %}
-    {% endif %}
+                                    {% if form.errors %}
+                                        <p class="form-login-error">Your username and password didn't match. Please try again.</p>
+                                    {% endif %}
+                                </div>
+                                <button class="login-btn no-copy" type="submit">Login</button>
+                                <div class="forgot-password no-copy"><a href="{% url 'password_reset' %}">Forgot your password?</a></div>
+                                <div class="sign-up-mobile-btn no-copy" style="display: none">Don't have an account? <a href="{% url 'signup' %}">Sign Up</a> </div>
+                            </form>
 
-
-    {% if user.is_authenticated %}
-        you are already logged in
-    {% else %}
-        <form method="post" action="{% url 'login' %}">{% csrf_token %}
-            <div>
-              <td>{{ form.username.label_tag }}</td>
-              <td>{{ form.username }}</td>
+                        </div>
+                    </div>
+                <div class="login-page-signup-wrapper col-sm-12 col-md-6">
+                    <div class="login-form-second-wrapper">
+                        <h2 class="no-copy">New member<span class="question-login-form">?</span></h2>
+                        <a href="{% url 'signup' %}"><button class="login-btn sign-up-btn no-copy">SIGN UP</button></a>
+                    </div>
+                </div>
+                {% endif %}
+                </div>
             </div>
-            <div>
-              <td>{{ form.password.label_tag }}</td>
-              <td>{{ form.password }}</td>
-            </div>
-
-            <div>
-              <input type="submit" value="login" />
-              <input type="hidden" name="next" value="{{ next }}" />
-            </div>
-        </form>
-        <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
-    {% endif %}
+        </div>
+    </div>
 {% endblock content %}

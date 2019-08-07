@@ -1,3 +1,22 @@
-<div class="navbar">
+<nav class="navbar navbar-dark" style="background-color: black;">
+      <ul class="navbar-nav ml-auto nav-right-log">
+                {% if user.is_authenticated %}
+                    <div class="container">
+                        <div class="row navbar-username">
+                             {{ user.get_username }}  <a href="{% url 'logout'%}?next={{request.path}}"> <i class="fas fa-sign-out-alt"></i></a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="nav-log-label">
+                    <a href="{% url 'login' %}">
+                        <button class="nav-btn">
+                            <span class="login-icon"><i class="far fa-user-circle fa-2x"></i></span>
+                        </button>
+                    </a>
+                    </div>
+                {% endif %}
+      </ul>
+</nav>
 
-</div>
+
+

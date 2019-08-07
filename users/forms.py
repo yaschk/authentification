@@ -7,32 +7,76 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.core.validators import validate_email
 from users.spec_func import ipInfo, get_calling_code
+from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
+from django.forms.widgets import PasswordInput, TextInput
+import string
 
 
 User = get_user_model()
 
 
-class CustomUserCreationForm(UserCreationForm):
+class CustomAuthForm(AuthenticationForm):
+    username = forms.CharField(label='', widget=TextInput(attrs={'class':'validate, login-input-field','placeholder': 'Email, username or phone number '}))
+    password = forms.CharField(label='', widget=PasswordInput(attrs={'class':'login-input-field','placeholder':'Password'}))
 
+
+class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         fields = ('username', 'email')
 
 
 class CustomUserChangeForm(UserChangeForm):
-
     class Meta:
         model = CustomUser
         fields = ('username', 'email')
 
 
 class SignUpForm(UserCreationForm):
-    first_and_last_name = forms.CharField(max_length=50, required=False, help_text='Optional.')
-    email_or_phone = forms.CharField(max_length=50, label="Phone number or Email", required=True)
+    first_and_last_name = forms.CharField(max_length=50, required=False, widget=TextInput(attrs={'placeholder': 'Full Name'}))
+    email_or_phone = forms.CharField(max_length=50, label="Phone number or Email", required=True, widget=TextInput(attrs={'placeholder': 'Email or phone number'}))
+    username = forms.CharField(min_length=3, widget=TextInput(attrs={'placeholder': 'Username'}))
+    password1 = forms.CharField(widget=PasswordInput(attrs={'placeholder': 'Password'}))
+
+    def __init__(self, *args, **kwargs):
+        super(SignUpForm, self).__init__(*args, **kwargs)
+        del self.fields['password2']
 
     class Meta:
         model = User
-        fields = ('email_or_phone', 'username', 'first_and_last_name', 'password1', 'password2', )
+        fields = ('email_or_phone', 'username', 'first_and_last_name', 'password1',)
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        allowed_chars = string.ascii_letters + string.digits + '_-.'
+        allowed_set = set(allowed_chars)
+
+        def check_set_diff(s):
+            return not set(s) - allowed_set
+
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("Entered username already exists")
+
+        if len(username) < 3:
+            raise ValidationError("Entered username too short. Minimum length is 3 symbols")
+
+        if username.isnumeric():
+            raise ValidationError("Username can not consist only of numbers")
+
+        if not check_set_diff(username):
+            raise ValidationError("Only alphanumeric characters, underscores, and periods can be used in usernames")
+
+        return username
+
+    def clean_password1(self):
+        password = self.cleaned_data['password1']
+
+        if len(password) < 6:
+            raise ValidationError("The minimum password length is 6 characters")
+
+        if password.isnumeric():
+            raise ValidationError("The password can not be only numbers")
+        return password
 
     def clean_email_or_phone(self):
         email_or_phone = self.cleaned_data['email_or_phone']
@@ -43,7 +87,6 @@ class SignUpForm(UserCreationForm):
             it_is_normal_phone = True
         except ValueError:
             it_is_normal_phone = False
-
 
         if not it_is_normal_phone:
             try:
@@ -83,7 +126,7 @@ class TokenForm(forms.Form):
 
 
 class PasswordResetRequestForm(forms.Form):
-    email_or_phone_or_username = forms.CharField(max_length=50, label="Phone number or Email or Username", required=True)
+    email_or_phone_or_username = forms.CharField(max_length=50, label="Phone number or Email or Username", required=True, widget=TextInput(attrs={'placeholder': 'Email, username or phone number'}))
 
     class Meta:
         model = User
@@ -131,25 +174,42 @@ class PasswordResetRequestForm(forms.Form):
                         raise ValidationError("This member doesn't exist")
 
 
-class SetPasswordForm(forms.Form):
+# class SetPasswordForm(forms.Form):
+#
+#     error_messages = {
+#         'password_mismatch': ("The two password fields didn't match."),
+#         }
+#     new_password1 = forms.CharField(label=("New password"),
+#                                     widget=PasswordInput(
+#                                         attrs={'placeholder': 'Password'}))
+#     new_password2 = forms.CharField(label=("New password confirmation"),
+#                                     widget=PasswordInput(
+#                                         attrs={'placeholder': 'Password confirmation'}))
+#
+#     def clean_new_password2(self):
+#         password1 = self.cleaned_data.get('new_password1')
+#         password2 = self.cleaned_data.get('new_password2')
+#         if password1 and password2:
+#             if password1 != password2:
+#                 raise forms.ValidationError("Password mismatch"
+#                     # self.error_messages['password_mismatch'],
+#                     # code='password_mismatch',
+#                 )
+#             if len(password2) < 6:
+#                 raise ValidationError("The minimum password length is 6 characters")
+#
+#             if password2.isnumeric():
+#                 raise ValidationError("The password can not be only numbers")
+#         return password2
 
-    error_messages = {
-        'password_mismatch': ("The two password fields didn't match."),
-        }
-    new_password1 = forms.CharField(label=("New password"),
-                                    widget=forms.PasswordInput)
-    new_password2 = forms.CharField(label=("New password confirmation"),
-                                    widget=forms.PasswordInput)
 
-    def clean_new_password2(self):
-        password1 = self.cleaned_data.get('new_password1')
-        password2 = self.cleaned_data.get('new_password2')
-        if password1 and password2:
-            if password1 != password2:
-                raise forms.ValidationError(
-                    self.error_messages['password_mismatch'],
-                    code='password_mismatch',
-                    )
-        return password2
+class CSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password', 'placeholder': 'New password'}),
+        strip=False,
 
-
+    )
+    new_password2 = forms.CharField(
+        strip=False,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password', 'placeholder': 'New password confirmation'}),
+    )
