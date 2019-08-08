@@ -1,7 +1,5 @@
 from django.test import TestCase
-import datetime
-from django.utils import timezone
-from users.forms import CustomAuthForm, SignUpForm
+from users.forms import CustomAuthForm, SignUpForm, PasswordResetRequestForm
 
 
 class CustomAuthFormTest(TestCase):
@@ -41,31 +39,74 @@ class SignUpFormTest(TestCase):
         form = SignUpForm()
         self.assertTrue(form.fields['password1'].label == 'Password')
 
+    def test_username_length_less(self):
+        form_data = {'username': 're'}
+        form = SignUpForm(data=form_data)
+        self.assertFalse(form.is_valid())
 
-    # def test_renew_form_date_field_help_text(self):
-    #     form = RenewBookForm()
-    #     self.assertEqual(form.fields['renewal_date'].help_text, 'Enter a date between now and 4 weeks (default 3).')
-    #
-    # def test_renew_form_date_in_past(self):
-    #     date = datetime.date.today() - datetime.timedelta(days=1)
-    #     form_data = {'renewal_date': date}
-    #     form = RenewBookForm(data=form_data)
-    #     self.assertFalse(form.is_valid())
-    #
-    # def test_renew_form_date_too_far_in_future(self):
-    #     date = datetime.date.today() + datetime.timedelta(weeks=4) + datetime.timedelta(days=1)
-    #     form_data = {'renewal_date': date}
-    #     form = RenewBookForm(data=form_data)
-    #     self.assertFalse(form.is_valid())
-    #
-    # def test_renew_form_date_today(self):
-    #     date = datetime.date.today()
-    #     form_data = {'renewal_date': date}
-    #     form = RenewBookForm(data=form_data)
-    #     self.assertTrue(form.is_valid())
-    #
-    # def test_renew_form_date_max(self):
-    #     date = timezone.now() + datetime.timedelta(weeks=4)
-    #     form_data = {'renewal_date': date}
-    #     form = RenewBookForm(data=form_data)
-    #     self.assertTrue(form.is_valid())
+    def test_username_length_more(self):
+        form_data = {'username': 'rewefwefwefewfwef32342fefwefr2fefe2effdsvdfsferf3j43fjn3j'}
+        form = SignUpForm(data=form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_username_is_numeric(self):
+        form_data = {"username": "123456"}
+        form = SignUpForm(data=form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_username_symbols(self):
+        form_data = {'username': 'qwerty12@/*+-'}
+        form = SignUpForm(data=form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_password_length_less(self):
+        form_data = {'password1': 're12'}
+        form = SignUpForm(data=form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_password_is_numeric(self):
+        form_data = {"password1": "123456"}
+        form = SignUpForm(data=form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_email_or_phone_is_phone(self):
+        form_data = {'username': 'usr12', 'password1': 'qwerty12034', 'email_or_phone': '+380987654321'}
+        form = SignUpForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_email_or_phone_is_phone_without_plus(self):
+        form_data = {'username': 'usr12', 'password1': 'qwerty12034', 'email_or_phone': '380987654321'}
+        form = SignUpForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_email_or_phone_is_phone_without_country_code(self):
+        form_data = {'username': 'usr12', 'password1': 'qwerty12034', 'email_or_phone': '0987654321'}
+        form = SignUpForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_email_or_phone_is_email(self):
+        form_data = {'username': 'usr12', 'password1': 'qwerty12034', 'email_or_phone': 'test@gmail.com'}
+        form = SignUpForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_email_or_phone_is_false(self):
+        form_data = {'username': 'usr12', 'password1': 'qwerty12034', 'email_or_phone': '@testgmail.com'}
+        form = SignUpForm(data=form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_email_or_phone_is_phone_without_startzero(self):
+        form_data = {'username': 'usr12', 'password1': 'qwerty12034', 'email_or_phone': '987654321'}
+        form = SignUpForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+
+class PasswordResetRequestFormTest(TestCase):
+
+    def test_email_or_phone_or_username_field_label(self):
+        form = PasswordResetRequestForm()
+        self.assertTrue(form.fields['email_or_phone_or_username'].label == 'Email, username or phone number')
+
+    def test_email_or_phone_or_username_field_placeholder(self):
+        form = PasswordResetRequestForm()
+        self.assertTrue(form.fields['email_or_phone_or_username'].widget.attrs["placeholder"] ==
+                        'Email, username or phone number')

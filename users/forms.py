@@ -89,7 +89,7 @@ class SignUpForm(UserCreationForm):
 
         try:
             if User.objects.filter(phone=email_or_phone).exists():
-                raise ValidationError("Entered phone already exists")
+                raise ValidationError("Entered phone already exists 1")
             it_is_normal_phone = True
         except ValueError:
             it_is_normal_phone = False
@@ -97,7 +97,7 @@ class SignUpForm(UserCreationForm):
         if not it_is_normal_phone:
             try:
                 if User.objects.filter(phone='+' + email_or_phone).exists():
-                    raise ValidationError("Entered phone already exists")
+                    raise ValidationError("Entered phone already exists 2")
                 it_is_plus_phone = True
                 email_or_phone = '+' + email_or_phone
             except ValueError:
@@ -106,7 +106,8 @@ class SignUpForm(UserCreationForm):
             if not it_is_plus_phone:
                 try:
                     if User.objects.filter(phone=('+' + str(get_calling_code(ipInfo())) + email_or_phone)).exists():
-                        raise ValidationError("Entered phone already exists")
+                        print('+' + str(get_calling_code(ipInfo())) + email_or_phone)
+                        raise ValidationError("Entered phone already exists 3")
                     it_is_local_phone = True
                     email_or_phone = '+' + str(get_calling_code(ipInfo())) + email_or_phone
                 except ValueError:
@@ -120,7 +121,7 @@ class SignUpForm(UserCreationForm):
                         it_is_email = False
                     if it_is_email:
                         if User.objects.filter(email=email_or_phone).exists():
-                            raise ValidationError("Entered email already exists")
+                            raise ValidationError("Entered email already exists 4")
                     else:
                         raise ValidationError("Incorrect field")
 
@@ -132,7 +133,10 @@ class TokenForm(forms.Form):
 
 
 class PasswordResetRequestForm(forms.Form):
-    email_or_phone_or_username = forms.CharField(max_length=50, label="Phone number or Email or Username", required=True, widget=TextInput(attrs={'placeholder': 'Email, username or phone number'}))
+    email_or_phone_or_username = forms.CharField(max_length=50, label="Email, username or phone number",
+                                                 required=True,
+                                                 widget=TextInput(attrs={
+                                                     'placeholder': 'Email, username or phone number'}))
 
     class Meta:
         model = User
@@ -182,11 +186,13 @@ class PasswordResetRequestForm(forms.Form):
 
 class CSetPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(
+        label="New password",
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password', 'placeholder': 'New password'}),
         strip=False,
 
     )
     new_password2 = forms.CharField(
+        label='New password confirmation',
         strip=False,
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password', 'placeholder': 'New password confirmation'}),
     )
