@@ -11,22 +11,22 @@ from users.managers import UserManager
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(_('username'), max_length=31, unique=True)
-    first_and_last_name = models.CharField(_('name'), max_length=50, blank=True)
-    email = models.EmailField(_('email address'), unique=True, blank=True, null=True)
-    phone = PhoneNumberField(null=True, blank=True, unique=True)
-    date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-    is_active = models.BooleanField(_('active'), default=True)
+    username = models.CharField(_('Username'), max_length=10, unique=True)
+    first_and_last_name = models.CharField(_('First and last name'), max_length=50, blank=True)
+    email = models.EmailField(_('Email'), unique=True, blank=True, null=True)
+    phone = PhoneNumberField(_('Phone number'),  unique=True, blank=True, null=True)
+    date_joined = models.DateTimeField(_('Date joined'), default=timezone.now)
+    is_active = models.BooleanField(_('Active status'), default=True)
     is_staff = models.BooleanField(
-        _('staff status'),
+        _('Staff status'),
         default=False,
         help_text=_('Designates whether the user can log into this admin site.'),
     )
-    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
-    email_confirmed = models.BooleanField(default=False)
-    phone_confirmed = models.BooleanField(default=False)
-    unconfirmed_email = models.EmailField(_('unconfirmed email address'), blank=True, null=True)
-    unconfirmed_phone = PhoneNumberField(null=True, blank=True)
+    avatar = models.ImageField(_('Avatar'), upload_to='avatars/', null=True, blank=True)
+    email_confirmed = models.BooleanField(_('Email confirmed'), default=False)
+    phone_confirmed = models.BooleanField(_('Phone confirmed'), default=False)
+    unconfirmed_email = models.EmailField(_('Unconfirmed email'), null=True, blank=True)
+    unconfirmed_phone = PhoneNumberField(_('Unconfirmed phone'), null=True, blank=True)
 
     objects = UserManager()
 
@@ -36,18 +36,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = _('user')
         verbose_name_plural = _('users')
-
-    def get_full_name(self):
-        '''
-        Returns the first_name plus the last_name, with a space in between.
-        '''
-        return self.first_and_last_name
-
-    def get_short_name(self):
-        '''
-        Returns the short name for the user.
-        '''
-        return self.first_and_last_name.split(' ')[0]
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Send an email to this user."""

@@ -24,7 +24,8 @@ class EmailOrUsernameOrPhoneNumberModelBackend(ModelBackend):
         elif it_is_locale_phone[0]:
             users = it_is_locale_phone[1]
         else:
-            users = user_model._default_manager.filter(Q(**{user_model.USERNAME_FIELD: username}) | Q(email__iexact=username, email_confirmed=True))
+            users = user_model._default_manager.filter(Q(**{user_model.USERNAME_FIELD: username}) |
+                                                       Q(email__iexact=username, email_confirmed=True))
 
         for user in users:
             if user.check_password(password):

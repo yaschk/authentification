@@ -173,8 +173,10 @@ html body{
 .login-btn:focus {
     outline: none;
 }
+
 .form-login-error{
     font-size: 80%;
+    color:red;
 }
 
 .forgot-password{
