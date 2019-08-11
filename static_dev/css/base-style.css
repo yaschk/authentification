@@ -184,11 +184,6 @@ html body{
     padding: 15px 0px 0px 0px;
 }
 
-.forgot-password a:hover{
-    background: rgba(139, 0, 139, 0.1);
-    padding: 2px;
-}
-
 .login-form-second-wrapper{
     /*margin: auto;*/
     width: 190px;

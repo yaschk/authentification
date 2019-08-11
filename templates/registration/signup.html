@@ -1,37 +1,3 @@
-{#{% extends 'base.html' %}#}
-{##}
-{#{% block title %}Sign Up{% endblock title %}#}
-{##}
-{#{% block content %}#}
-{#    <div class="login-signup-container container-fluid">#}
-{#        <div class="row">#}
-{#            <div class="signup-page-wrapper col-sm-12 col-md-6 col-lg-6 col-xl-6">#}
-{#                <div class="signup-form">#}
-{#                    <h2 class="signup-form-header no-copy">Sign up</h2>#}
-{#                    <form autocomplete="off" method="post">#}
-{#                    {% csrf_token %}#}
-{#                    {% for field in form %}#}
-{#                        <div class="input-signup-form">#}
-{#                            {{ field }}#}
-{#                        </div>#}
-{#                        {% for error in field.errors %}#}
-{#                          <p style="color: red; font-size: 80%">{{ error }}</p>#}
-{#                        {% endfor %}#}
-{#                    {% endfor %}#}
-{#                    <div class="signup-page-btn-wrapper">#}
-{#                        <button class="signup-page-btn login-btn no-copy" type="submit">Sign up</button>#}
-{#                    </div>#}
-{#                     <div class="sign-up-mobile-btn no-copy" style="display: none">Have an account? <a href="{% url 'login' %}">Login</a> </div>#}
-{#                    </form>#}
-{#                </div>#}
-{#            </div>#}
-{#        <div class="signup-page-wrapper col-sm-12 col-md-6 col-lg-6 col-xl-6">#}
-{#        </div>#}
-{#        </div>#}
-{#    </div>#}
-{#{% endblock content %}#}
-
-
 {% extends 'base.html' %}
 
 {% block title %}Login{% endblock title %}
@@ -43,7 +9,7 @@
                 <div class="row">
                 {% if user.is_authenticated %}
                                 You are already logged in
-                         {% else %}
+                {% else %}
                      <div class="signup-form-wrapper col-sm-12 col-md-6">
                         <div class="login-form-second-wrapper">
                             <h2 class="login-header no-copy">Sign Up</h2>

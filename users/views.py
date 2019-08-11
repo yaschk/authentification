@@ -1,20 +1,14 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
-from users.forms import SignUpForm, TokenForm, CSetPasswordForm
-from django.contrib.auth import login
+from users.forms import SignUpForm, TokenForm, CSetPasswordForm, PasswordResetRequestForm, FullEmailOrPhoneForm
+from django.contrib.auth import login, get_user_model
 from django.contrib.auth.models import User
-from django.utils.encoding import force_text
+from django.utils.encoding import force_text, force_bytes
 from users.tokens import account_activation_token
-from django.contrib.auth import get_user_model
 from authy.api import AuthyApiClient
 from django.conf import settings
 from django.shortcuts import render, redirect
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.views.generic import *
-from users.forms import PasswordResetRequestForm
-from django.contrib import messages
 from django.db.models.query_utils import Q
 import phonenumbers
 from users.spec_func import mail_creator_phone, mail_creator_email, validate_email_address
@@ -58,7 +52,9 @@ def signup(request):
                 user.save()
                 try:
                     request.session['phone'] = form.cleaned_data['email_or_phone']
-                    country_code, national_nmb = phonenumbers.parse(request.session['phone'], None).country_code, phonenumbers.parse(request.session['phone'], None).national_number
+                    country_code, national_nmb = phonenumbers.parse(request.session['phone'],
+                                                                    None).country_code, phonenumbers.parse(
+                        request.session['phone'], None).national_number
                     request.session['userUIDB64'] = urlsafe_base64_encode(force_bytes(user.pk))
                     authy_api.phones.verification_start(
                         national_nmb,
@@ -77,7 +73,9 @@ def token_validation(request):
     if request.method == 'POST':
         form = TokenForm(request.POST)
         if form.is_valid():
-            country_code, national_nmb = phonenumbers.parse(request.session['phone'], None).country_code, phonenumbers.parse(request.session['phone'], None).national_number
+            country_code, national_nmb = phonenumbers.parse(request.session['phone'],
+                                                            None).country_code, phonenumbers.parse(
+                request.session['phone'], None).national_number
             verification = authy_api.phones.verification_check(
                 national_nmb,
                 country_code,
@@ -168,56 +166,46 @@ def reset_password_request_view(request):
                     associated_users = User.objects.filter(Q(email=data) | Q(username=data))
                     for user in associated_users:
                         mail_creator_email(user, request)
-                    return redirect('password_reset_done')
-            #USERNAME
+                    return redirect('password_reset_email')
+                # USERNAME
                 else:
                     associated_users = User.objects.filter(username=data)
                     for user in associated_users:
-                        if user.email_confirmed:
-                            mail_creator_email(user, request)
-                        else:
-                            mail_creator_phone(user, request)
-                    return redirect('password_reset_user')
+                        return redirect('password_reset_confirm_user', user)
+
     else:
         form = PasswordResetRequestForm()
     return render(request, 'registration/password_reset_form.html', {'form': form})
 
 
-# class PasswordResetConfirmView(FormView):
-#     template_name = "registration/password_reset_confirm.html"
-#     success_url = '/accounts/reset/done/'
-#     form_class = SetPasswordForm
-#
-#     def post(self, request, uidb64=None, token=None, *arg, **kwargs):
-#         UserModel = get_user_model()
-#         form = self.form_class(request.POST)
-#         assert uidb64 is not None and token is not None
-#         try:
-#             uid = urlsafe_base64_decode(uidb64)
-#             user = UserModel._default_manager.get(pk=uid)
-#         except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-#             user = None
-#
-#         if user is not None and default_token_generator.check_token(user, token):
-#             if form.is_valid():
-#                 new_password = form.cleaned_data['new_password2']
-#                 user.set_password(new_password)
-#                 user.save()
-#                 # messages.success(request, 'Password has been reset.')
-#                 return self.form_valid(form)
-#             else:
-#                 # form = SetPasswordForm()
-#                 # return render(request, 'registration/password_reset_confirm.html', {'form': form})
-#                 # messages.error(request, 'Password reset has not been unsuccessful.')
-#                 return self.form_invalid(form)
-#         else:
-#             messages.error(request, 'The reset password link is no longer valid.')
-#             return self.form_invalid(form)
-
-# class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+def reset_password_with_username(request, user):
+    curr_user = User.objects.filter(username=user)[0]
+    encode_email, encode_phone = None, None
+    if curr_user.email_confirmed:
+        part_email = str(curr_user.email).split('@')
+        encode_email = part_email[0][:-round(len(part_email[0]) / 2)] + '*' * round(
+            len(part_email[0]) / 2) + '@' + \
+                       part_email[1]
+    else:
+        encode_phone = str(curr_user.phone)[:-5] + '****' + str(curr_user.phone)[-1:]
+    if request.method == 'POST':
+        form = FullEmailOrPhoneForm(data=request.POST, user=curr_user)
+        if form.is_valid():
+            if encode_email is not None:
+                mail_creator_email(curr_user, request)
+                return redirect('password_reset_user')
+            else:
+                mail_creator_phone(curr_user, request)
+                return redirect('password_reset_phone')
+    else:
+            form = FullEmailOrPhoneForm(user=curr_user)
+    return render(request, 'registration/password_reset_with_username.html', {'form': form,
+                                                                              'encode_email': encode_email,
+                                                                              'encode_phone': encode_phone},)
 
 
 class New_PasswordResetConfirmView(PasswordResetConfirmView):
     form_class = CSetPasswordForm
+
     def __init__(self):
         super(New_PasswordResetConfirmView, self)

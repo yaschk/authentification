@@ -196,3 +196,23 @@ class CSetPasswordForm(SetPasswordForm):
         strip=False,
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password', 'placeholder': 'New password confirmation'}),
     )
+
+
+class FullEmailOrPhoneForm(forms.Form):
+    email_or_phone = forms.CharField(max_length=50, label="Email or phone number", required=True,
+                                     widget=TextInput(attrs={'placeholder': 'Enter here'}))
+
+    class Meta:
+        model = User
+        fields = ('email_or_phone',)
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_email_or_phone(self):
+        email_or_phone = self.cleaned_data['email_or_phone']
+        if email_or_phone == self.user.email or email_or_phone == self.user.phone:
+            return email_or_phone
+        else:
+            raise ValidationError("User doesn't exist")
