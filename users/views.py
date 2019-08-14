@@ -179,29 +179,32 @@ def reset_password_request_view(request):
 
 
 def reset_password_with_username(request, user):
-    curr_user = User.objects.filter(username=user)[0]
-    encode_email, encode_phone = None, None
-    if curr_user.email_confirmed:
-        part_email = str(curr_user.email).split('@')
-        encode_email = part_email[0][:-round(len(part_email[0]) / 2)] + '*' * round(
-            len(part_email[0]) / 2) + '@' + \
-                       part_email[1]
-    else:
-        encode_phone = str(curr_user.phone)[:-5] + '****' + str(curr_user.phone)[-1:]
-    if request.method == 'POST':
-        form = FullEmailOrPhoneForm(data=request.POST, user=curr_user)
-        if form.is_valid():
-            if encode_email is not None:
-                mail_creator_email(curr_user, request)
-                return redirect('password_reset_user')
-            else:
-                mail_creator_phone(curr_user, request)
-                return redirect('password_reset_phone')
-    else:
-            form = FullEmailOrPhoneForm(user=curr_user)
-    return render(request, 'registration/password_reset_with_username.html', {'form': form,
+    try:
+        curr_user = User.objects.filter(username=user)[0]
+        encode_email, encode_phone = None, None
+        if curr_user.email_confirmed:
+            part_email = str(curr_user.email).split('@')
+            encode_email = part_email[0][:-round(len(part_email[0]) / 2)] + '*' * round(
+                len(part_email[0]) / 2) + '@' + \
+                           part_email[1]
+        elif curr_user.phone_confirmed:
+            encode_phone = str(curr_user.phone)[:-5] + '****' + str(curr_user.phone)[-1:]
+        if request.method == 'POST':
+            form = FullEmailOrPhoneForm(data=request.POST, user=curr_user)
+            if form.is_valid():
+                if encode_email is not None:
+                    mail_creator_email(curr_user, request)
+                    return redirect('password_reset_user')
+                else:
+                    mail_creator_phone(curr_user, request)
+                    return redirect('password_reset_phone')
+        else:
+                form = FullEmailOrPhoneForm(user=curr_user)
+        return render(request, 'registration/password_reset_with_username.html', {'form': form,
                                                                               'encode_email': encode_email,
                                                                               'encode_phone': encode_phone},)
+    except IndexError:
+        return redirect('password_reset')
 
 
 class New_PasswordResetConfirmView(PasswordResetConfirmView):

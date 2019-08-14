@@ -1,5 +1,5 @@
 from django.test import TestCase
-from users.models import User
+from users.models import CustomUser
 from django.urls import reverse
 
 
@@ -177,5 +177,42 @@ class UserVerificationTokenViewTest(TestCase):
         resp = self.client.get(reverse('token_validation'))
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, 'registration/token_validation.html')
+
+
+class UserQuestionResetViewTest(TestCase):
+
+    def setUp(self):
+        test_user1 = CustomUser.objects.create_user(username='testuser1', password='12345')
+        # test_user1.email = 'test@i.ua'
+        test_user1.save()
+
+    def test_user_exist_view_url_exists_at_desired_location(self):
+        resp = self.client.get('/password-reset/testuser1/')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_not_exist_view_url_exists_at_desired_location(self):
+        resp = self.client.get('/password-reset/testuser100/')
+        self.assertEqual(resp.status_code, 302)
+
+
+class UserIndexPageViewTest(TestCase):
+
+    def setUp(self):
+        test_user1 = CustomUser.objects.create_user(username='testuser1', password='12345')
+        # test_user1.email = 'test@i.ua'
+        test_user1.save()
+
+    def test_index_view_url_exists_at_desired_location(self):
+        resp = self.client.get('')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_ver_token_view_url_accessible_by_name(self):
+        resp = self.client.get(reverse('home'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_ver_token_view_uses_correct_template(self):
+        resp = self.client.get(reverse('home'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'landing/home.html')
 
 

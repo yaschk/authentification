@@ -146,7 +146,7 @@ class PasswordResetRequestForm(forms.Form):
         email_or_phone_or_username = self.cleaned_data['email_or_phone_or_username']
 
         try:
-            if User.objects.get(phone=email_or_phone_or_username):
+            if User.objects.get(phone=email_or_phone_or_username, phone_confirmed=True):
                 return email_or_phone_or_username
             it_is_normal_phone = True
         except ValueError:
@@ -154,7 +154,7 @@ class PasswordResetRequestForm(forms.Form):
 
         if not it_is_normal_phone:
             try:
-                if User.objects.get(phone='+' + email_or_phone_or_username):
+                if User.objects.get(phone='+' + email_or_phone_or_username, phone_confirmed=True):
                     return '+' + email_or_phone_or_username
                 it_is_plus_phone = True
             except ValueError:
@@ -162,7 +162,8 @@ class PasswordResetRequestForm(forms.Form):
 
             if not it_is_plus_phone:
                 try:
-                    if User.objects.get(phone=('+' + str(get_calling_code(ipInfo())) + email_or_phone_or_username)):
+                    if User.objects.get(phone=('+' + str(get_calling_code(ipInfo())) + email_or_phone_or_username),
+                                        phone_confirmed=True):
                         return '+' + str(get_calling_code(ipInfo())) + email_or_phone_or_username
                     it_is_local_phone = True
                 except ValueError:
@@ -176,9 +177,10 @@ class PasswordResetRequestForm(forms.Form):
                         it_is_email = False
                     try:
                         if it_is_email:
-                            if User.objects.get(email=email_or_phone_or_username):
+                            if User.objects.get(email=email_or_phone_or_username, email_confirmed=True):
                                 return email_or_phone_or_username
-                        elif User.objects.get(username=email_or_phone_or_username):
+                        elif User.objects.get(username=email_or_phone_or_username, phone_confirmed=True)\
+                                or User.objects.get(username=email_or_phone_or_username, email_confirmed=True):
                             return email_or_phone_or_username
                     except ObjectDoesNotExist:
                         raise ValidationError("This member doesn't exist")
